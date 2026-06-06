@@ -31,7 +31,6 @@ export component AppWindow inherits Window {
     callback request-edit(int);
     callback cancel-edit();
     callback accept-edit();
-    callback capture-shortcut(string, bool, bool, bool, bool);
     callback select-tab(int);
     callback begin-window-drag();
     callback request-minimize();
@@ -237,9 +236,6 @@ export component AppWindow inherits Window {
             }
             accept-edit => {
                 root.accept-edit();
-            }
-            capture-shortcut(text, control, alt, shift, meta) => {
-                root.capture-shortcut(text, control, alt, shift, meta);
             }
         }
     }

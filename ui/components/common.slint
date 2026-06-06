@@ -67,6 +67,8 @@ export component HeaderButton inherits Rectangle {
 
 export component HotkeyChip inherits Rectangle {
     in property <string> value;
+    in property <bool> align-right: false;
+    in property <bool> align-center: false;
 
     border-radius: 10px;
     border-width: 1px;
@@ -74,13 +76,14 @@ export component HotkeyChip inherits Rectangle {
     background: #1a2030;
 
     Text {
-        width: parent.width;
+        x: 14px;
+        width: parent.width - 28px;
         height: parent.height;
         text: root.value;
         color: #edf1ff;
         font-size: 15px;
         font-weight: 500;
-        horizontal-alignment: center;
+        horizontal-alignment: root.align-center ? center : root.align-right ? right : left;
         vertical-alignment: center;
     }
 }

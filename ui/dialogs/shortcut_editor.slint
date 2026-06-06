@@ -8,7 +8,6 @@ export component ShortcutEditorDialog inherits Rectangle {
 
     callback cancel-edit();
     callback accept-edit();
-    callback capture-shortcut(string, bool, bool, bool, bool);
 
     visible: root.editing-index >= 0;
     background: #05070db0;
@@ -38,17 +37,6 @@ export component ShortcutEditorDialog inherits Rectangle {
             enabled: root.editing-index >= 0;
             focus-on-click: false;
             focus-on-tab-navigation: false;
-
-            key-pressed(event) => {
-                root.capture-shortcut(
-                    event.text,
-                    event.modifiers.control,
-                    event.modifiers.alt,
-                    event.modifiers.shift,
-                    event.modifiers.meta
-                );
-                accept
-            }
         }
 
         Text {
@@ -78,6 +66,7 @@ export component ShortcutEditorDialog inherits Rectangle {
             width: parent.width - 48px;
             height: 54px;
             value: root.pending-shortcut;
+            align-center: true;
         }
 
         DialogButton {
