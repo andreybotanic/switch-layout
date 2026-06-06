@@ -1,0 +1,19 @@
+export component AppWindow inherits Window {
+    title: "SwitchLayout";
+    width: 800px;
+    height: 480px;
+
+    Rectangle {
+        background: #f5f7fb;
+
+        Text {
+            width: parent.width;
+            height: parent.height;
+            text: "SwitchLayout is running";
+            color: #1f2937;
+            font-size: 24px;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+}

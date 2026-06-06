@@ -1,0 +1,22 @@
+[package]
+name = "switch_layout"
+version = "0.1.0"
+edition = "2024"
+build = "build.rs"
+
+[dependencies]
+slint = "1.16.0"
+
+[build-dependencies]
+slint-build = "1.16.0"
+
+[lints.rust]
+unsafe_code = "deny"
+missing_debug_implementations = "warn"
+
+[lints.rustdoc]
+broken_intra_doc_links = "warn"
+bare_urls = "warn"
+
+[lints.clippy]
+all = "warn"
