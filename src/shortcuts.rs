@@ -99,6 +99,10 @@ fn bind_winit_shortcut_handler(window: &ui::AppWindow) {
             };
 
             match event {
+                winit::event::WindowEvent::Focused(false) => {
+                    state.borrow_mut().reset();
+                    EventResult::Propagate
+                }
                 winit::event::WindowEvent::ModifiersChanged(modifiers) => {
                     state.borrow_mut().sync_modifiers(modifiers.state());
                     EventResult::Propagate
@@ -392,6 +396,10 @@ struct ShortcutCaptureState {
 }
 
 impl ShortcutCaptureState {
+    fn reset(&mut self) {
+        self.modifiers = ShortcutModifiers::default();
+    }
+
     fn sync_modifiers(&mut self, modifiers: winit::keyboard::ModifiersState) {
         self.modifiers.control = modifiers.control_key();
         self.modifiers.alt = modifiers.alt_key();
@@ -571,6 +579,23 @@ mod tests {
         ));
         assert_eq!(fn_lock_rendered.display, "Fn Lock");
         assert!(fn_lock_rendered.valid);
+    }
+
+    #[test]
+    fn resets_modifier_state() {
+        let mut state = ShortcutCaptureState {
+            modifiers: ShortcutModifiers {
+                control: true,
+                alt: true,
+                shift: true,
+                win: true,
+                function: true,
+            },
+        };
+
+        state.reset();
+
+        assert_eq!(state.modifiers, ShortcutModifiers::default());
     }
 
     #[test]
