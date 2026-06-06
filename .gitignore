@@ -3,3 +3,6 @@
 /.vscode/
 *.user
 *.rs.bk
+/.codex/
+/artifacts/
+/logs/
