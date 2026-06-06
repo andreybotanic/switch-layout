@@ -1,0 +1,47 @@
+import { HotkeyChip, IconActionButton } from "common.slint";
+
+export component ShortcutRow inherits Rectangle {
+    in property <string> action-label;
+    in property <string> shortcut-text;
+    in property <bool> show-top-divider: false;
+    callback edit-requested;
+
+    Rectangle {
+        visible: root.show-top-divider;
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: 1px;
+        background: #2c3445;
+    }
+
+    Text {
+        x: 26px;
+        y: 0;
+        width: 240px;
+        height: parent.height;
+        text: root.action-label;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 500;
+        vertical-alignment: center;
+    }
+
+    HotkeyChip {
+        x: parent.width - self.width - 74px;
+        y: parent.height * 0.5 - self.height * 0.5;
+        width: 186px;
+        height: 40px;
+        value: root.shortcut-text;
+    }
+
+    IconActionButton {
+        x: parent.width - self.width - 24px;
+        y: parent.height * 0.5 - self.height * 0.5;
+        width: 40px;
+        height: 40px;
+        clicked => {
+            root.edit-requested();
+        }
+    }
+}

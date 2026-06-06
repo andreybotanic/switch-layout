@@ -1,0 +1,105 @@
+import { ToggleSwitch } from "../components/common.slint";
+import { ShortcutRow } from "../components/shortcut_row.slint";
+
+export component SettingsPage inherits Rectangle {
+    in property <string> first-action-label;
+    in property <string> first-shortcut-text;
+    in property <string> second-action-label;
+    in property <string> second-shortcut-text;
+    in-out property <bool> autostart-enabled: true;
+    in property <length> content-padding-x: 46px;
+    in property <length> content-top: 30px;
+    callback request-edit(int);
+
+    background: #121825;
+
+    Text {
+        x: root.content-padding-x;
+        y: root.content-top;
+        width: 220px;
+        height: 42px;
+        text: "Настройки";
+        color: #ffffff;
+        font-size: 28px;
+        font-weight: 700;
+    }
+
+    Text {
+        x: root.content-padding-x;
+        y: 92px;
+        width: 320px;
+        height: 28px;
+        text: "Переключение раскладки";
+        color: #ffffff;
+        font-size: 17px;
+        font-weight: 700;
+    }
+
+    hotkey-card := Rectangle {
+        x: root.content-padding-x;
+        y: 140px;
+        width: parent.width - root.content-padding-x * 2;
+        height: 156px;
+        border-radius: 16px;
+        border-width: 1px;
+        border-color: #2f3748;
+        background: #171d2b;
+        clip: true;
+
+        ShortcutRow {
+            x: 0;
+            y: 0;
+            width: parent.width;
+            height: parent.height / 2;
+            action-label: root.first-action-label;
+            shortcut-text: root.first-shortcut-text;
+            edit-requested => {
+                root.request-edit(0);
+            }
+        }
+
+        ShortcutRow {
+            x: 0;
+            y: parent.height / 2;
+            width: parent.width;
+            height: parent.height / 2;
+            show-top-divider: true;
+            action-label: root.second-action-label;
+            shortcut-text: root.second-shortcut-text;
+            edit-requested => {
+                root.request-edit(1);
+            }
+        }
+    }
+
+    autostart-card := Rectangle {
+        x: root.content-padding-x;
+        y: 356px;
+        width: parent.width - root.content-padding-x * 2;
+        height: 82px;
+        border-radius: 16px;
+        border-width: 1px;
+        border-color: #2f3748;
+        background: #171d2b;
+
+        Text {
+            x: 26px;
+            y: 0;
+            width: 180px;
+            height: parent.height;
+            text: "Автозапуск";
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 500;
+            vertical-alignment: center;
+        }
+
+        ToggleSwitch {
+            x: parent.width - self.width - 24px;
+            y: parent.height * 0.5 - self.height * 0.5;
+            width: 66px;
+            height: 34px;
+            checked <=> root.autostart-enabled;
+        }
+    }
+}

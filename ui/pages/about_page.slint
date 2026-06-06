@@ -1,0 +1,52 @@
+export component AboutPage inherits Rectangle {
+    in property <string> app-name: "SwitchLayout";
+    in property <string> app-version: "v1.0.0";
+    in property <length> content-padding-x: 46px;
+    in property <length> content-top: 30px;
+
+    background: #121825;
+
+    Text {
+        x: root.content-padding-x;
+        y: root.content-top;
+        width: 260px;
+        height: 42px;
+        text: "О приложении";
+        color: #ffffff;
+        font-size: 28px;
+        font-weight: 700;
+    }
+
+    Rectangle {
+        x: root.content-padding-x;
+        y: 104px;
+        width: parent.width - root.content-padding-x * 2;
+        height: 132px;
+        border-radius: 16px;
+        border-width: 1px;
+        border-color: #2f3748;
+        background: #171d2b;
+
+        Text {
+            x: 28px;
+            y: 24px;
+            width: parent.width - 56px;
+            height: 28px;
+            text: root.app-name;
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        Text {
+            x: 28px;
+            y: 64px;
+            width: parent.width - 56px;
+            height: 24px;
+            text: root.app-version;
+            color: #c7cddd;
+            font-size: 16px;
+            font-weight: 500;
+        }
+    }
+}
