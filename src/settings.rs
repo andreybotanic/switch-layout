@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, io, path::PathBuf};
+use std::{collections::HashMap, fs, io, path::Path, path::PathBuf};
 
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
@@ -22,6 +22,7 @@ const SHORTCUT_DEFINITIONS: &[ShortcutDefinition] = &[
 ];
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
 pub(crate) struct AppSettings {
     pub(crate) autostart_enabled: bool,
     pub(crate) shortcuts: Vec<ShortcutBinding>,
@@ -175,11 +176,7 @@ fn shortcut_label(id: &str) -> &'static str {
         .unwrap_or("Неизвестное действие")
 }
 
-fn replace_file(source: &std::path::Path, destination: &std::path::Path) -> io::Result<()> {
-    if destination.exists() {
-        fs::remove_file(destination)?;
-    }
-
+fn replace_file(source: &Path, destination: &Path) -> io::Result<()> {
     fs::rename(source, destination)
 }
 
@@ -262,6 +259,32 @@ mod tests {
             .load_or_initialize()
             .expect("updated settings should be readable after overwrite");
         assert_eq!(reloaded, updated);
+    }
+
+    #[test]
+    fn fills_missing_fields_without_resetting_existing_shortcuts() {
+        let store = test_store("missing_fields");
+        let config_dir =
+            store.config_path().parent().expect("config path should have a parent directory");
+
+        fs::create_dir_all(config_dir).expect("config dir should be created");
+        fs::write(
+            store.config_path(),
+            r#"
+                shortcuts = [
+                    { id = "switch_last_word", shortcut = "Ctrl + Shift + J" }
+                ]
+            "#,
+        )
+        .expect("partial settings file should be written");
+
+        let loaded = store
+            .load_or_initialize()
+            .expect("settings with missing fields should be normalized");
+
+        assert!(loaded.autostart_enabled);
+        assert_eq!(loaded.shortcuts[0].shortcut, "Ctrl + Shift + J");
+        assert_eq!(loaded.shortcuts[1].shortcut, "Ctrl + Alt + 2");
     }
 
     fn test_store(test_name: &str) -> SettingsStore {
