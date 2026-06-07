@@ -3,8 +3,9 @@ use std::{cell::RefCell, rc::Rc};
 use slint::winit_030::{EventResult, WinitWindowAccessor, winit};
 use slint::{ComponentHandle, Model, SharedString, VecModel};
 
-use crate::ui;
+use crate::{settings, ui};
 
+#[allow(dead_code)]
 pub(crate) fn default_shortcut_actions() -> Rc<VecModel<ui::ShortcutAction>> {
     Rc::new(VecModel::from(vec![
         ui::ShortcutAction {
@@ -16,10 +17,15 @@ pub(crate) fn default_shortcut_actions() -> Rc<VecModel<ui::ShortcutAction>> {
     ]))
 }
 
-pub(crate) fn bind_handlers(window: &ui::AppWindow, shortcuts: Rc<VecModel<ui::ShortcutAction>>) {
+pub(crate) fn bind_handlers(
+    window: &ui::AppWindow,
+    shortcuts: Rc<VecModel<ui::ShortcutAction>>,
+    settings: Rc<RefCell<settings::AppSettings>>,
+    store: Rc<settings::SettingsStore>,
+) {
     bind_request_edit_handler(window, Rc::clone(&shortcuts));
     bind_cancel_edit_handler(window);
-    bind_accept_edit_handler(window, Rc::clone(&shortcuts));
+    bind_accept_edit_handler(window, Rc::clone(&shortcuts), settings, store);
     bind_winit_shortcut_handler(window);
 }
 
@@ -63,7 +69,12 @@ fn bind_cancel_edit_handler(window: &ui::AppWindow) {
     });
 }
 
-fn bind_accept_edit_handler(window: &ui::AppWindow, shortcuts: Rc<VecModel<ui::ShortcutAction>>) {
+fn bind_accept_edit_handler(
+    window: &ui::AppWindow,
+    shortcuts: Rc<VecModel<ui::ShortcutAction>>,
+    settings: Rc<RefCell<settings::AppSettings>>,
+    store: Rc<settings::SettingsStore>,
+) {
     window.on_accept_edit({
         let window = window.as_weak();
 
@@ -80,7 +91,13 @@ fn bind_accept_edit_handler(window: &ui::AppWindow, shortcuts: Rc<VecModel<ui::S
                 return;
             };
 
-            if save_shortcut(&shortcuts, index, window.get_pending_shortcut()) {
+            if save_shortcut(
+                &shortcuts,
+                &settings,
+                store.as_ref(),
+                index,
+                window.get_pending_shortcut(),
+            ) {
                 close_editor(&window);
             }
         }
@@ -164,15 +181,34 @@ fn closed_editor_state() -> ClosedEditorState {
 
 fn save_shortcut(
     shortcuts: &VecModel<ui::ShortcutAction>,
+    settings: &RefCell<settings::AppSettings>,
+    store: &settings::SettingsStore,
     index: usize,
     pending_shortcut: SharedString,
 ) -> bool {
-    let Some(mut action) = shortcuts.row_data(index) else {
+    let Some(action) = shortcuts.row_data(index) else {
         return false;
     };
 
-    action.shortcut = pending_shortcut;
-    shortcuts.set_row_data(index, action);
+    let previous_shortcut = action.shortcut.to_string();
+    let next_shortcut = pending_shortcut.to_string();
+
+    {
+        let mut settings = settings.borrow_mut();
+
+        if !settings.set_shortcut(index, next_shortcut.clone()) {
+            return false;
+        }
+
+        if let Err(_error) = store.save(&settings) {
+            let _ = settings.set_shortcut(index, previous_shortcut);
+            return false;
+        }
+    }
+
+    let mut updated_action = action;
+    updated_action.shortcut = next_shortcut.into();
+    shortcuts.set_row_data(index, updated_action);
     true
 }
 
@@ -474,7 +510,10 @@ struct ClosedEditorState {
 
 #[cfg(test)]
 mod tests {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
     use super::*;
+    use crate::settings;
 
     #[test]
     fn renders_letter_with_modifiers() {
@@ -605,10 +644,32 @@ mod tests {
             shortcut: "Ctrl + Alt + 1".into(),
         }]);
 
-        assert!(save_shortcut(&shortcuts, 0, "Alt + Shift + K".into()));
+        let settings = RefCell::new(settings::AppSettings::default());
+        let store =
+            settings::SettingsStore::from_path(test_config_path("saves_shortcut_into_model"));
+
+        assert!(save_shortcut(&shortcuts, &settings, &store, 0, "Alt + Shift + K".into()));
 
         let action = shortcuts.row_data(0).expect("expected shortcut row");
         assert_eq!(action.shortcut, "Alt + Shift + K");
+        assert_eq!(settings.borrow().shortcuts[0].shortcut, "Alt + Shift + K");
+    }
+
+    #[test]
+    fn persists_shortcut_change_to_store() {
+        let shortcuts = VecModel::from(vec![ui::ShortcutAction {
+            label: "Последнее слово".into(),
+            shortcut: "Ctrl + Alt + 1".into(),
+        }]);
+        let settings = RefCell::new(settings::AppSettings::default());
+        let store =
+            settings::SettingsStore::from_path(test_config_path("persists_shortcut_change"));
+
+        assert!(save_shortcut(&shortcuts, &settings, &store, 0, "Ctrl + Shift + J".into()));
+
+        let persisted =
+            store.load_or_initialize().expect("settings should be readable after shortcut save");
+        assert_eq!(persisted.shortcuts[0].shortcut, "Ctrl + Shift + J");
     }
 
     #[test]
@@ -624,5 +685,16 @@ mod tests {
         modifiers: ShortcutModifiers,
     ) -> ShortcutInput {
         ShortcutInput { key: describe_physical_key(key.into()), modifiers }
+    }
+
+    fn test_config_path(test_name: &str) -> std::path::PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock should be after unix epoch")
+            .as_nanos();
+
+        std::env::temp_dir()
+            .join(format!("switch_layout_{test_name}_{}_{}", std::process::id(), unique))
+            .join("settings.toml")
     }
 }

@@ -5,7 +5,10 @@ edition = "2024"
 build = "build.rs"
 
 [dependencies]
+directories = "6.0.0"
+serde = { version = "1.0.228", features = ["derive"] }
 slint = { version = "1.16.0", features = ["unstable-winit-030"] }
+toml = "0.9.8"
 
 [build-dependencies]
 slint-build = "1.16.0"

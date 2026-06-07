@@ -31,6 +31,7 @@ export component AppWindow inherits Window {
     callback request-edit(int);
     callback cancel-edit();
     callback accept-edit();
+    callback autostart-toggled(bool);
     callback select-tab(int);
     callback begin-window-drag();
     callback request-minimize();
@@ -40,6 +41,10 @@ export component AppWindow inherits Window {
     property <length> sidebar-width: 246px;
     property <length> content-padding-x: 46px;
     property <length> content-top: 30px;
+
+    changed autostart-enabled => {
+        root.autostart-toggled(root.autostart-enabled);
+    }
 
     Rectangle {
         background: #111623;
